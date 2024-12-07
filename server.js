@@ -310,6 +310,7 @@ const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const { MongoClient, ObjectId } = require("mongodb");
 
+const User = require("./models/user");
 
 const app = express();
 app.use(express.json());
@@ -370,32 +371,63 @@ app.get("/", (req, res) => {
 });
 
 // Route for user signup
-app.post("/signup/", async (request, response) => {
+// app.post("/signup/", async (request, response) => {
+//     const { username, email, password } = request.body;
+
+//     try {
+//         const existingUser = await db.collection("users").findOne({ username });
+//         if (existingUser) {
+//             return response.status(400).send({ message: "User already exists." });
+//         }
+
+//         const hashedPassword = await bcrypt.hash(password, 10);
+//         const user = {
+//             user_id: uuidv4(),
+//             username,
+//             email,
+//             password: hashedPassword,
+//             created_at: new Date(),
+//             role: "USER"
+//         };
+
+//         await db.collection("users").insertOne(user);
+//         response.status(201).send({ message: "User created successfully." });
+//     } catch (error) {
+//         console.error("Error in signup:", error.message);
+//         response.status(500).send({ message: "Internal server error." });
+//     }
+// });
+
+
+// Signup route
+app.post("/signup", async (request, response) => {
     const { username, email, password } = request.body;
 
     try {
-        const existingUser = await db.collection("users").findOne({ username });
+        const existingUser = await User.findOne({ username });
         if (existingUser) {
             return response.status(400).send({ message: "User already exists." });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = {
+
+        const user = new User({
             user_id: uuidv4(),
             username,
             email,
             password: hashedPassword,
-            created_at: new Date(),
-            role: "USER"
-        };
+        });
 
-        await db.collection("users").insertOne(user);
+        await user.save();
         response.status(201).send({ message: "User created successfully." });
     } catch (error) {
         console.error("Error in signup:", error.message);
         response.status(500).send({ message: "Internal server error." });
     }
 });
+
+
+
 
 // Route for user login
 app.post("/login/", async (request, response) => {
