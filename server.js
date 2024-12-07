@@ -309,30 +309,41 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const { MongoClient, ObjectId } = require("mongodb");
-require('dotenv').config();
+// require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
 // Environment variables
 const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI; // Ensure this is correctly set in your .env file
+// const MONGO_URI = process.env.MONGO_URI; // Ensure this is correctly set in your .env file
 const JWT_SECRET = process.env.JWT_SECRET || "my_secret_jwt_token";
 
 let db;
 
 // Connect to MongoDB with enhanced error handling
-(async () => {
-    try {
-        const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-        await client.connect();
-        console.log("Connected to MongoDB Atlas!");
-        db = client.db("todosDatabase"); // Replace with your database name
-    } catch (error) {
-        console.error("Failed to connect to MongoDB:", error);
-        process.exit(1); // Exit the process if MongoDB connection fails
-    }
-})();
+// (async () => {
+//     try {
+//         const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+//         await client.connect();
+//         console.log("Connected to MongoDB Atlas!");
+//         db = client.db("todosDatabase"); // Replace with your database name
+//     } catch (error) {
+//         console.error("Failed to connect to MongoDB:", error);
+//         process.exit(1); // Exit the process if MongoDB connection fails
+//     }
+// })();
+
+require('dotenv').config();
+
+console.log("MONGO_URI:", process.env.MONGO_URI); // Debugging
+
+const mongoose = require('mongoose');
+
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Failed to connect to MongoDB:", err));
 
 // Middleware for JWT token verification
 const middleWare = (request, response, next) => {
