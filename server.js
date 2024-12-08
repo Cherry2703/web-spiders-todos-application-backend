@@ -403,6 +403,10 @@ app.use((req, res, next) => {
   app.use(express.json());
 
 
+
+//   console.log(process.env.MONGO_URI);
+  
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI,{ useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Connected to MongoDB"))
@@ -514,13 +518,18 @@ app.post('/signup', async (req, res) => {
 
 // Login Route
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+    const { username, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username and password are required." });
-  }
+    if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required." });
+    }
+
+
+    console.log(username,password,'login route called');
+    
 
   try {
+    
     const user = await UserModel.findOne({ username });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials." });
@@ -550,6 +559,8 @@ const validateTodoData = (req, res, next) => {
 
 // Task Routes
 app.get('/tasks/', authenticateToken, async (req, res) => {
+    console.log('tasks route called to get all tasks');
+    
   try {
     const todos = await TodosModel.find({ user_id: req.userId });
     if (todos.length === 0) {
@@ -563,6 +574,8 @@ app.get('/tasks/', authenticateToken, async (req, res) => {
 });
 
 app.post('/tasks/', authenticateToken, validateTodoData, async (req, res) => {
+    console.log('tasks route to add new task');
+    
   try {
     const { title, description, priority, status } = req.body;
     const newTodo = new TodosModel({
