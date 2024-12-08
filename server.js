@@ -393,7 +393,15 @@ const app = express();
 const port = process.env.PORT || 3005;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
-app.use(express.json());
+
+app.use((req, res, next) => {
+    console.log(`Request Method: ${req.method}, Request URL: ${req.url}`);
+    next();
+  });
+  
+
+  app.use(express.json());
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI,{ useNewUrlParser: true, useUnifiedTopology: true })
