@@ -1,498 +1,340 @@
-// const express = require("express");
-// const bcrypt = require("bcrypt");
-// const jwt = require("jsonwebtoken");
-// const { v4: uuidv4 } = require("uuid");
-// const { MongoClient, ObjectId } = require("mongodb");
 
-// const app = express();
-// app.use(express.json());
-
-// const PORT = 3000;
-// const MONGO_URI = "mongodb+srv://ramcharanamr2408:XPHQvpkAAYCQUW91@cluster0.pjllx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"; 
-// const JWT_SECRET = "my_secret_jwt_token";
-
-// let db;
-
-// // Connect to MongoDB
-// (async () => {
-//     try {
-//         const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-//         await client.connect();
-//         console.log("Connected to MongoDB Atlas!");
-//         db = client.db("todosDatabase"); // Replace with your database name
-//     } catch (error) {
-//         console.error("Failed to connect to MongoDB:", error.message);
-//         process.exit(1);
-//     }
-// })();
-
-// // Middleware for JWT token verification
-// const middleWare = (request, response, next) => {
-//     const authHeader = request.headers.authorization;
-//     if (authHeader) {
-//         const jwtToken = authHeader.split(" ")[1];
-//         jwt.verify(jwtToken, JWT_SECRET, (error, payload) => {
-//             if (error) {
-//                 return response.status(401).send({ message: "Invalid Token" });
-//             }
-//             request.username = payload.username;
-//             next();
-//         });
-//     } else {
-//         response.status(401).send({ message: "Authorization header missing" });
-//     }
-// };
-
-// // Basic route to check server status
-// app.get("/", (req, res) => {
-//     res.send("Todos backend testing is working... go for different routes");
-// });
-
-// // Route for user signup
-// app.post("/signup/", async (request, response) => {
-//     const { username, email, password } = request.body;
-//     const hashedPassword = await bcrypt.hash(password, 10);
-
-//     try {
-//         const existingUser = await db.collection("users").findOne({ username });
-//         if (existingUser) {
-//             return res.status(400).send({ message: "User already exists." });
-//         }
-
-//         const user = {
-//             user_id: uuidv4(),
-//             username,
-//             email,
-//             password: hashedPassword,
-//             created_at: new Date(),
-//             role:"USER"
-//         };
-
-//         await db.collection("users").insertOne(user);
-//         response.status(201).send({ message: "User created successfully." });
-//     } catch (error) {
-//         console.error("Error in signup:", error.message);
-//         response.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-// // Route for user login
-// app.post("/login/", async (request, response) => {
-//     const { username, password } = request.body;
-
-//     try {
-//         const user = await db.collection("users").findOne({ username });
-//         if (!user) {
-//             return res.status(401).send({ message: "User not found." });
-//         }
-
-//         const isValidPassword = await bcrypt.compare(password, user.password);
-//         if (isValidPassword) {
-//             const token = jwt.sign({ username }, JWT_SECRET);
-//             response.status(200).send({ jwtToken: token });
-//         } else {
-//             response.status(400).send({ message: "Invalid Password" });
-//         }
-//     } catch (error) {
-//         console.error("Error in login:", error.message);
-//         response.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-// // Route to get user profile
-// app.get("/profile/", middleWare, async (req, res) => {
-//     try {
-//         const user = await db.collection("users").findOne({ username: req.username }, { projection: { password: 0 } });
-//         if (user) {
-//             res.status(200).send(user);
-//         } else {
-//             res.status(404).send({ message: "User not found." });
-//         }
-//     } catch (error) {
-//         console.error("Error in getting profile:", error.message);
-//         res.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-// // Route to update user profile
-// app.put("/profile/", middleWare, async (req, res) => {
-//     const { email, password, role } = req.body;
-//     const updates = {};
-//     if (email) updates.email = email;
-//     if (password) updates.password = await bcrypt.hash(password, 10);
-//     if (role) updates.role = role;
-
-//     try {
-//         const result = await db.collection("users").updateOne({ username: req.username }, { $set: updates });
-//         if (result.matchedCount) {
-//             res.status(200).send({ message: "Profile updated successfully." });
-//         } else {
-//             res.status(404).send({ message: "User not found." });
-//         }
-//     } catch (error) {
-//         console.error("Error in updating profile:", error.message);
-//         res.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-// // Route to delete user profile
-// app.delete("/profile/", middleWare, async (req, res) => {
-//     try {
-//         const result = await db.collection("users").deleteOne({ username: req.username });
-//         if (result.deletedCount) {
-//             res.status(200).send({ message: "User deleted successfully." });
-//         } else {
-//             res.status(404).send({ message: "User not found." });
-//         }
-//     } catch (error) {
-//         console.error("Error in deleting profile:", error.message);
-//         res.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-// // Route to get all todos
-// app.get("/todos/", middleWare, async (req, res) => {
-//     try {
-//         const user = await db.collection("users").findOne({ username: req.username });
-//         if (!user) {
-//             return res.status(404).send({ message: "User not found." });
-//         }
-
-//         const todos = await db.collection("todos").find({ user_id: user.user_id }).toArray();
-//         res.status(200).send({ todos });
-//     } catch (error) {
-//         console.error("Error in getting todos:", error.message);
-//         res.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-// // Route to create a new todo
-// app.post("/todos/", middleWare, async (req, res) => {
-//     const { title, description } = req.body;
-
-//     // Check if title and description are provided
-//     if (!title || !description) {
-//         return res.status(400).send({ message: "Title and description are mandatory." });
-//     }
-
-//     try {
-//         const user = await db.collection("users").findOne({ username: req.username });
-//         if (!user) {
-//             return res.status(404).send({ message: "User not found." });
-//         }
-
-//         const todo = {
-//             id: uuidv4(),
-//             user_id: user.user_id,
-//             title,
-//             description,
-//             created_at: new Date(),
-//             priority: "LOW",
-//             status: "TODO",
-//             is_deleted: 0
-//         };
-
-//         await db.collection("todos").insertOne(todo);
-//         res.status(201).send({ message: "Todo created successfully." });
-//     } catch (error) {
-//         console.error("Error in creating todo:", error.message);
-//         res.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-
-// app.put('/todos/:todoId/', middleWare, async (request, response) => {
-//     try {
-//         const { todoId } = request.params;
-//         const { title, description, status, priority, is_deleted } = request.body;
-
-//         const user = await db.collection("users").findOne({ username: request.username });
-
-//         if (!user) {
-//             return response.status(404).send({ message: "User not found." });
-//         } 
-//         // Finding the existing todo
-//         const todo = await db.collection("todos").findOne({ user_id: user.user_id, id: todoId });
-//         if (!todo) {
-//             return response.status(404).send({ message: "Todo not found." });
-//         }
-
-        
-//         const updateFields = {};
-//         if (title !== undefined) updateFields.title = title;
-//         if (description !== undefined) updateFields.description = description;
-//         if (status !== undefined) updateFields.status = status;
-//         if (priority !== undefined) updateFields.priority = priority;
-//         if (is_deleted !== undefined) updateFields.is_deleted = is_deleted;
-
-//         // Updating the todo with the provided fields
-//         if (Object.keys(updateFields).length > 0) {
-//             await db.collection("todos").updateOne(
-//                 { user_id: user.user_id, id: todoId },
-//                 { $set: updateFields }
-//             );
-//         }
- 
-//         response.status(200).send({ message: 'Task Updated Successfully.' });
-//     } catch (error) {
-//         console.error(`DB Error: ${error.message}`);
-//         response.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-
-// app.get("/todos/:todoId/", middleWare, async (request, response) => {
-//     const {todoId} = request.params
-//     try {
-//         const user = await db.collection("users").findOne({ username: request.username });
-//         if (!user) {
-//             return response.status(404).send({ message: "User not found." });
-//         }
-
-//         const todo = await db.collection("todos").findOne({ user_id: user.user_id ,id:todoId});
-//         response.status(200).send({ todo });
-//     } catch (error) {
-//         console.error("Error in getting todos:", error.message); 
-//         response.status(500).send({ message: "Internal server error." });
-//     }
-// });
-
-// app.delete('/todos/:todoId/',middleWare,async(request,response)=>{
-//     const {todoId} = request.params
-//     try {
-//         const user = await db.collection("users").findOne({ username: request.username });
-//         if (!user) {
-//             return res.status(404).send({ message: "User not found." });
-//         }
-//         const result = await db.collection("todos").deleteOne({ user_id: user.user_id,id:todoId });
-//         if (result.deletedCount) {
-//             response.status(200).send({ message: "Task deleted successfully." });
-//         } else {
-//             response.status(404).send({ message: "User not found." });
-//         }
-//     } catch (error) {
-//         console.error("Error in deleting profile:", error.message);
-//         response.status(500).send({ message: "Internal server error." });
-//     }
-// })
-
-
-// app.get('/users/', middleWare, async (request, response) => {
-//     try {
-//         const user = await db.collection("users").findOne({ username: request.username , role:'ADMIN' });
-//         if (!user) {
-//             return res.status(404).send({ message: "You cannot get all the users beacause you are not ADMIN." });
-//         }
-
-//         const todos = await db.collection("users").find().toArray();
-//         response.status(200).send({ todos });
-//     } catch (error) {
-//         console.error("Error in getting todos:", error.message); 
-//         response.status(500).send({ message: "Internal server error." });
-//     } 
-
-// });
-
-// // Start the server
-// app.listen(PORT, () => {
-//     console.log(`Server is running on http://localhost:${PORT}`); 
-// });
-
-
-
-
-
-     
-
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { v4: uuidv4 } = require("uuid");
-const { MongoClient, ObjectId } = require("mongodb");
-
-const User = require("./models/user");
-
-const app = express();
-app.use(express.json());
-
-// Environment variables
-const PORT = process.env.PORT || 3000;
-// const MONGO_URI = process.env.MONGO_URI; // Ensure this is correctly set in your .env file
-const JWT_SECRET = process.env.JWT_SECRET || "my_secret_jwt_token";
-
-let db;
-
-// Connect to MongoDB with enhanced error handling
-// (async () => {
-//     try {
-//         const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-//         await client.connect();
-//         console.log("Connected to MongoDB Atlas!");
-//         db = client.db("todosDatabase"); // Replace with your database name
-//     } catch (error) {
-//         console.error("Failed to connect to MongoDB:", error);
-//         process.exit(1); // Exit the process if MongoDB connection fails
-//     }
-// })();
-
+const express = require('express');
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
-console.log("MONGO_URI:", process.env.MONGO_URI); // Debugging
+const app = express();
+const port = process.env.PORT || 3005;
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
-const mongoose = require('mongoose');
+// Middleware to parse JSON requests
+app.use(express.json());
 
+// Connect to MongoDB
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Failed to connect to MongoDB:", err));
+  .catch((err) => console.error("MongoDB connection error:", err));
 
-// Middleware for JWT token verification
-const middleWare = (request, response, next) => {
-    const authHeader = request.headers.authorization;
+// Schemas
+const todosSchema = new mongoose.Schema({
+  taskId: { type: String, unique: true },
+  title: String,
+  description: String,
+  user_id: String,
+  priority: String,
+  status: String,
+  created_at: { type: Date, default: Date.now },
+});
+
+const userSchema = new mongoose.Schema({
+  user_id:{type:String,unique:true},
+  username: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  created_at: { type: Date, default: Date.now },
+  role: { type: String, default: "USER" },
+});
+
+// Models
+const TodosModel = mongoose.model('todos', todosSchema);
+const UserModel = mongoose.model('users', userSchema);
+
+// Routes
+app.get('/', async (req, res) => {
+  res.send(' application is working go for different routes.... thank you!');
+});
+
+
+
+// Signup Route
+app.post('/signup', async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    // Check if the username or email already exists
+    const existingUser = await UserModel.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ message: "Username or email already exists." });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const newUser = new UserModel({
+      user_id:uuidv4(),
+      username,
+      email,
+      password: hashedPassword,
+      created_at: new Date(),
+      role: "USER",
+    });
+
+    // Save the user to the database
+    await newUser.save();
+    res.status(201).json({ message: "User created successfully." });
+  } catch (error) {
+    console.error("Error during signup:", error.message);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+// Login Route
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: "Username and password are required." });
+  }
+
+  try {
+    // Find the user by username
+    const user = await UserModel.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    // Compare the provided password with the stored hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign({ username: user.username, userId: user.user_id }, JWT_SECRET, { expiresIn: "1h" });
+
+    res.status(200).json({ message: "Login successful", jwtToken: token });
+  } catch (error) {
+    console.error("Error during login:", error.message);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+
+
+
+const Middleware = (req, res, next) => {
+    const authHeader = req.headers.authorization;
     if (authHeader) {
-        const jwtToken = authHeader.split(" ")[1];
-        jwt.verify(jwtToken, JWT_SECRET, (error, payload) => {
-            if (error) {
-                console.error("JWT Verification Error:", error.message);
-                return response.status(401).send({ message: "Invalid Token" });
-            }
-            request.username = payload.username;
-            next();
-        });
+      const token = authHeader.split(" ")[1];
+      jwt.verify(token, JWT_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).json({ message: "Invalid or expired token." });
+        }
+        req.userId = decoded.userId; // Attach userId to the request object
+        next();
+      });
     } else {
-        console.error("Authorization header missing.");
-        response.status(401).send({ message: "Authorization header missing" });
+      return res.status(401).json({ message: "Authorization token required." });
     }
-};
-
-// Basic route to check server status
-app.get("/", (req, res) => {
-    res.send("Todos backend testing is working... go for different routes");
-});
-
-// Route for user signup
-// app.post("/signup/", async (request, response) => {
-//     const { username, email, password } = request.body;
-
-//     try {
-//         const existingUser = await db.collection("users").findOne({ username });
-//         if (existingUser) {
-//             return response.status(400).send({ message: "User already exists." });
-//         }
-
-//         const hashedPassword = await bcrypt.hash(password, 10);
-//         const user = {
-//             user_id: uuidv4(),
-//             username,
-//             email,
-//             password: hashedPassword,
-//             created_at: new Date(),
-//             role: "USER"
-//         };
-
-//         await db.collection("users").insertOne(user);
-//         response.status(201).send({ message: "User created successfully." });
-//     } catch (error) {
-//         console.error("Error in signup:", error.message);
-//         response.status(500).send({ message: "Internal server error." });
-//     }
-// });
+  };
 
 
-// Signup route
-app.post("/signup", async (request, response) => {
-    const { username, email, password } = request.body;
 
+  app.get('/tasks/', Middleware, async (req, res) => {
     try {
-        const existingUser = await User.findOne({ username });
-        if (existingUser) {
-            return response.status(400).send({ message: "User already exists." });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = new User({
-            user_id: uuidv4(),
-            username,
-            email,
-            password: hashedPassword,
-        });
-
-        await user.save();
-        response.status(201).send({ message: "User created successfully." });
+      const userId = req.userId; // Extract userId from the middleware
+      const todos = await TodosModel.find({ user_id: userId });
+  
+      if (todos.length === 0) {
+        return res.status(404).json({ message: "There are no Tasks to show. Create new tasks!" });
+      }
+  
+      res.status(200).json(todos);
     } catch (error) {
-        console.error("Error in signup:", error.message);
-        response.status(500).send({ message: "Internal server error." });
+      console.error("Error retrieving todos:", error.message);
+      res.status(500).json({ message: "Internal server error." });
     }
-});
+  });
 
-
-
-
-// Route for user login
-app.post("/login/", async (request, response) => {
-    const { username, password } = request.body;
-
+  app.post("/tasks/", Middleware, async (req, res) => {
+    const { title, description, priority = "LOW", status = "TODO" } = req.body;
+  
+    // Validate input
+    if (!title || !description) {
+      return res.status(400).json({ message: "Title and description are mandatory." });
+    }
+  
     try {
-        const user = await db.collection("users").findOne({ username });
-        if (!user) {
-            return response.status(401).send({ message: "User not found." });
-        }
-
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (isValidPassword) {
-            const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
-            response.status(200).send({ jwtToken: token });
-        } else {
-            response.status(400).send({ message: "Invalid Password" });
-        }
+      // Use `req.userId` set by the Middleware to identify the user
+      const user = await UserModel.find({user_id:req.userId});
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+  
+      // Create the new todo object
+      const todo = new TodosModel({
+        user_id: req.userId,
+        taskId:uuidv4(),
+        title,
+        description,
+        priority,
+        status,
+      });
+  
+      // Save the todo to the database
+      await todo.save();
+      res.status(201).json({ message: "Todo created successfully.", todo });
     } catch (error) {
-        console.error("Error in login:", error.message);
-        response.status(500).send({ message: "Internal server error." });
+      console.error("Error in creating todo:", error.message);
+      res.status(500).json({ message: "Internal server error." });
     }
-});
+  });
 
-// Route to get user profile
-app.get("/profile/", middleWare, async (req, res) => {
+
+
+  app.put('/tasks/:taskId', Middleware, async (req, res) => {
     try {
-        const user = await db.collection("users").findOne({ username: req.username }, { projection: { password: 0 } });
-        if (user) {
-            res.status(200).send(user);
-        } else {
-            res.status(404).send({ message: "User not found." });
-        }
+      const { taskId } = req.params;
+      const { title, description, status, priority } = req.body;
+  
+      // Find user using the `req.userId` set by the middleware
+      const user = await UserModel.find({user_id:req.userId});
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+  
+      // Find the todo belonging to the user
+      const todo = await TodosModel.findOne({ taskId: taskId, user_id: req.userId });
+      if (!todo) {
+        return res.status(404).json({ message: "Todo not found." });
+      }
+  
+      // Build the update object dynamically
+      const updateFields = {};
+      if (title !== undefined) updateFields.title = title;
+      if (description !== undefined) updateFields.description = description;
+      if (status !== undefined) updateFields.status = status;
+      if (priority !== undefined) updateFields.priority = priority;
+  
+      if (Object.keys(updateFields).length > 0) {
+        // Update the todo
+        const updatedTodo = await TodosModel.findOneAndUpdate(
+          { taskId: taskId, user_id: req.userId }, // Query to ensure we only update the correct todo
+          { $set: updateFields }, // Update object
+          { new: true } // Return the updated document
+        );
+        return res.status(200).json({ message: "Todo updated successfully.", updatedTodo });
+      } else {
+        return res.status(400).json({ message: "No valid fields to update." });
+      }
     } catch (error) {
-        console.error("Error in getting profile:", error.message);
-        res.status(500).send({ message: "Internal server error." });
+      console.error("Error in updating todo:", error.message);
+      res.status(500).json({ message: "Internal server error." });
     }
-});
+  });
+  
 
-// Route to update user profile
-app.put("/profile/", middleWare, async (req, res) => {
-    const { email, password, role } = req.body;
-    const updates = {};
 
-    if (email) updates.email = email;
-    if (password) updates.password = await bcrypt.hash(password, 10);
-    if (role) updates.role = role;
-
+  app.delete('/tasks/:taskId', Middleware, async (req, res) => {
     try {
-        const result = await db.collection("users").updateOne({ username: req.username }, { $set: updates });
-        if (result.matchedCount) {
-            res.status(200).send({ message: "Profile updated successfully." });
-        } else {
-            res.status(404).send({ message: "User not found." });
-        }
+      const { taskId } = req.params;
+  
+      // Find user using the `req.userId` set by the middleware
+      const user = await UserModel.find({user_id:req.userId});
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+  
+      // Find and delete the todo belonging to the user
+      const result = await TodosModel.findOneAndDelete({ taskId: taskId, user_id: req.userId });
+  
+      if (result) {
+        return res.status(200).json({ message: "Todo deleted successfully." });
+      } else {
+        return res.status(404).json({ message: "Todo not found or already deleted." });
+      }
     } catch (error) {
-        console.error("Error in updating profile:", error.message);
-        res.status(500).send({ message: "Internal server error." });
+      console.error("Error in deleting todo:", error.message);
+      res.status(500).json({ message: "Internal server error." });
     }
-});
-
-// Route to delete user profile
-app.delete("/profile/", middleWare, async (req, res) => {
+  });
+  
+  
+  app.get('/tasks/:taskId/',Middleware,async(req,res)=>{
     try {
-        const result = await db.collection("users").deleteOne({ username: req.username });
+      const {taskId} = req.params
+      const todos = await TodosModel.find({ user_id: req.userId,taskId:taskId });
+  
+      if (todos.length===0) {
+        return res.status(404).json({ message: "Cannot find the task..." });
+      }
+  
+      res.status(200).json(todos);
+    } catch (error) {
+      console.error("Error retrieving task:", error.message);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  })
+
+
+  app.get('/profile/', Middleware, async (req, res) => {
+    try {
+      const profile = await UserModel.find({ user_id: req.userId });
+      if (profile.length === 0) {
+        return res.status(404).json({ message: "No todos found for this user." });
+      }
+      res.status(200).json(profile); 
+    } catch (error) {
+      console.error("Error retrieving todos:", error.message);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  });
+
+
+  app.put('/profile/', Middleware, async (req, res) => {
+    try {
+      const { username, email, password, role } = req.body;
+  
+      // Build the update object dynamically
+      const updateFields = {};
+  
+      if (username !== undefined) updateFields.username = username;
+      if (email !== undefined) updateFields.email = email;
+      if (password !== undefined) {
+        // Hash the password only if it's provided in the request
+        updateFields.password = await bcrypt.hash(password, 10);
+      }
+      if (role !== undefined) updateFields.role = role;
+  
+      // Check if there are any fields to update
+      if (Object.keys(updateFields).length === 0) {
+        return res.status(400).json({ message: "No valid fields provided to update." });
+      }
+  
+      // Update the user's profile
+      const result = await UserModel.updateOne(
+        { user_id: req.userId },
+        { $set: updateFields }
+      );
+  
+      if (result.matchedCount > 0) {
+        res.status(200).json({ message: "Profile updated successfully." });
+      } else {
+        res.status(404).json({ message: "User not found." });
+      }
+    } catch (error) {
+      console.error("Error in updating profile:", error.message);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  });
+  
+
+
+
+
+
+  app.delete("/profile/", Middleware, async (req, res) => {
+    try {
+        const result = await db.collection("users").deleteOne({ user_id: req.userId }); 
         if (result.deletedCount) {
             res.status(200).send({ message: "User deleted successfully." });
         } else {
@@ -504,123 +346,33 @@ app.delete("/profile/", middleWare, async (req, res) => {
     }
 });
 
-// Route to get all todos
-app.get("/todos/", middleWare, async (req, res) => {
-    try {
-        const user = await db.collection("users").findOne({ username: req.username });
-        if (!user) {
-            return res.status(404).send({ message: "User not found." });
-        }
 
-        const todos = await db.collection("todos").find({ user_id: user.user_id }).toArray();
-        res.status(200).send({ todos });
-    } catch (error) {
-        console.error("Error in getting todos:", error.message);
-        res.status(500).send({ message: "Internal server error." });
-    }
-});
+app.get('/users/',Middleware,async(req,res)=>{
+  try {
+    const users = await UserModel.find({ user_id: req.userId,role:'ADMIN' });
 
-// Route to create a new todo
-app.post("/todos/", middleWare, async (req, res) => {
-    const { title, description } = req.body;
 
-    if (!title || !description) {
-        return res.status(400).send({ message: "Title and description are mandatory." });
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: "You are not an ADMIN to get all the Users." });
     }
 
-    try {
-        const user = await db.collection("users").findOne({ username: req.username });
-        if (!user) {
-            return res.status(404).send({ message: "User not found." });
-        }
+    const allUsers = await UserModel.find({})
 
-        const todo = {
-            id: uuidv4(),
-            user_id: user.user_id,
-            title,
-            description,
-            created_at: new Date(),
-            priority: "LOW",
-            status: "TODO",
-            is_deleted: 0
-        };
+    res.status(200).json(allUsers);
+  } catch (error) {
+    console.error("Error retrieving todos:", error.message);
+    res.status(500).json({ message: "Internal server error." });
+  }
+})
 
-        await db.collection("todos").insertOne(todo);
-        res.status(201).send({ message: "Todo created successfully." });
-    } catch (error) {
-        console.error("Error in creating todo:", error.message);
-        res.status(500).send({ message: "Internal server error." });
-    }
+// Start Server
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}/`);
 });
 
-// Route to update a todo
-app.put('/todos/:todoId/', middleWare, async (request, response) => {
-    try {
-        const { todoId } = request.params;
-        const { title, description, status, priority, is_deleted } = request.body;
 
-        const user = await db.collection("users").findOne({ username: request.username });
 
-        if (!user) {
-            return response.status(404).send({ message: "User not found." });
-        }
 
-        const todo = await db.collection("todos").findOne({ user_id: user.user_id, id: todoId });
-        if (!todo) {
-            return response.status(404).send({ message: "Todo not found." });
-        }
 
-        const updateFields = {};
-        if (title !== undefined) updateFields.title = title;
-        if (description !== undefined) updateFields.description = description;
-        if (status !== undefined) updateFields.status = status;
-        if (priority !== undefined) updateFields.priority = priority;
-        if (is_deleted !== undefined) updateFields.is_deleted = is_deleted;
 
-        if (Object.keys(updateFields).length > 0) {
-            await db.collection("todos").updateOne(
-                { user_id: user.user_id, id: todoId },
-                { $set: updateFields }
-            );
-
-            return response.status(200).send({ message: "Todo updated successfully." });
-        } else {
-            return response.status(400).send({ message: "No valid fields to update." });
-        }
-    } catch (error) {
-        console.error("Error in updating todo:", error.message);
-        response.status(500).send({ message: "Internal server error." });
-    }
-});
- 
-// Route to delete a todo
-app.delete('/todos/:todoId', middleWare, async (request, response) => {
-    try {
-        const { todoId } = request.params;
-
-        const user = await db.collection("users").findOne({ username: request.username });
-
-        if (!user) {
-            return response.status(404).send({ message: "User not found." });
-        }
-
-        const result = await db.collection("todos").deleteOne({
-            user_id: user.user_id,
-            id: todoId
-        });
-
-        if (result.deletedCount === 1) {
-            return response.status(200).send({ message: "Todo deleted successfully." });
-        } else {
-            return response.status(404).send({ message: "Todo not found or already deleted." });
-        }
-    } catch (error) {
-        console.error("Error in deleting todo:", error.message);
-        response.status(500).send({ message: "Internal server error." });
-    }
-});
-
-// Server initialization
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
